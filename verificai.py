@@ -17,6 +17,7 @@ Original file is located at
 !pip install PyPDF2
 
 import os
+import sys
 from google.colab import files, userdata
 import PyPDF2
 from google import genai
@@ -57,11 +58,16 @@ def agente_avaliador(curriculo_extraido: str):
         name="agente_avaliador",
         model="gemini-2.0-flash",
         instruction="""
-        Você é um avaliador de currículos experiente, um especialista na área de recursos humanos. Avalie o conteúdo a seguir:
-        Mantenha-se centrado nos pontos abaixo:
-        1. Destaque pontos fortes.
-        2. Aponte áreas de melhoria.
-        3. Seja objetivo e profissional.
+        Você é um especialista sênior em Recursos Humanos, com vasta experiência em avaliação de currículos.
+        Sua tarefa é analisar o conteúdo abaixo de forma crítica e construtiva.
+
+        Siga as diretrizes a seguir:
+
+        1. Identifique e destaque os principais pontos fortes do candidato, incluindo habilidades técnicas, experiências relevantes e conquistas notáveis.
+        2. Aponte de forma clara e respeitosa os aspectos que podem ser aprimorados, como organização, clareza, formatação, uso de palavras-chave ou linguagem profissional.
+        3. Mantenha uma abordagem objetiva, profissional e direta. Não há necessidade de cumprimento.
+
+        Evite generalizações. Foque em observações específicas e úteis que realmente possam ajudar o candidato a melhorar seu currículo.
         """,
         description="Agente que avalia currículos criticamente."
     )
@@ -73,8 +79,15 @@ def agente_otimizador(curriculo_extraido: str):
         name="agente_otimizador",
         model="gemini-2.0-flash",
         instruction="""
-        Você é um especialista em revisão de currículos. Melhore a clareza, objetividade e impacto do conteúdo abaixo.
-        Corrija erros gramaticais e melhore a linguagem profissional.
+        Você é um especialista em revisão e otimização de currículos, com ampla experiência em Recursos Humanos e comunicação profissional.
+
+        Revise o conteúdo abaixo com o objetivo de torná-lo mais claro, direto e impactante. Faça os seguintes ajustes:
+        - Corrija erros gramaticais, ortográficos e de pontuação.
+        - Reescreva trechos confusos ou ambíguos, aprimorando a fluidez do texto.
+        - Adote uma linguagem profissional e assertiva, adequada ao contexto de um currículo competitivo.
+        - Mantenha as informações relevantes, destacando conquistas, competências e experiências de forma estratégica.
+
+        O texto resultante deve transmitir profissionalismo, credibilidade e destacar o potencial do candidato.
         """,
         description="Agente otimizador de currículo"
     )
@@ -86,8 +99,13 @@ def agente_carta(curriculo_otimizado: str):
         name="agente_carta",
         model="gemini-2.0-flash",
         instruction="""
-        Você é um redator especializado em cartas de apresentação. Escreva uma carta em português profissional
-        com base no currículo abaixo, destacando os pontos fortes do candidato.
+        Você é um redator profissional especializado na criação de cartas de apresentação impactantes e bem estruturadas.
+
+        Com base no currículo fornecido, redija uma carta de apresentação em português com linguagem formal e objetiva. Destaque os principais pontos fortes do candidato, como experiências relevantes, habilidades técnicas e comportamentais, conquistas e diferenciais que o tornem atrativo para o mercado de trabalho.
+
+        Adapte o tom para ser compatível com o perfil do profissional (júnior, pleno ou sênior) e enfatize como ele pode contribuir para a empresa ou vaga desejada.
+
+        A carta deve transmitir confiança, profissionalismo e clareza, com uma estrutura lógica e persuasiva.
         """,
         description="Agente que gera carta de apresentação"
     )
@@ -99,11 +117,16 @@ def agente_recomendador(curriculo_otimizado: str):
         name="agente_recomendador",
         model="gemini-2.0-flash",
         instruction="""
-        Você é um mentor de carreira. Com base no currículo abaixo, recomende os próximos passos para o desenvolvimento profissional:
-        - Habilidades a desenvolver
-        - Ferramentas para aprender
-        - Tipos de projeto para praticar
-        - Recursos úteis (cursos, livros, etc)
+        Você é um mentor de carreira experiente, especializado em orientar profissionais em busca de crescimento e evolução.
+
+        Com base no currículo apresentado, analise o perfil do candidato e forneça recomendações personalizadas para os próximos passos no desenvolvimento profissional, incluindo:
+
+        - Habilidades técnicas e comportamentais que devem ser aprimoradas ou adquiridas.
+        - Ferramentas, softwares ou metodologias relevantes que o candidato deve aprender para se destacar na área.
+        - Tipos de projetos ou experiências práticas que podem fortalecer o currículo.
+        - Recursos úteis para o aprendizado contínuo, como cursos (gratuitos ou pagos), livros, sites, comunidades ou certificações reconhecidas.
+
+        Seja estratégico, direto e contextualize as sugestões com base no nível atual do candidato, sempre visando um avanço real e aplicável no mercado de trabalho.
         """,
         description="Agente de carreira para próximos passos"
     )
@@ -114,10 +137,19 @@ def agente_recomendador(curriculo_otimizado: str):
 
 uploaded = files.upload()
 file_name = list(uploaded.keys())[0]
-pdf = open(file_name, 'rb')
-reader = PyPDF2.PdfReader(pdf)
-curriculo_extraido = "\n".join([page.extract_text() for page in reader.pages])
-pdf.close()
+
+if not file_name.lower().endswith(".pdf"):
+    display(Markdown("⚠️ **O arquivo enviado não é um PDF. Por favor, envie um arquivo com extensão `.pdf`.**"))
+    sys.exit()
+
+try:
+    with open(file_name, 'rb') as pdf:
+        reader = PyPDF2.PdfReader(pdf)
+        curriculo_extraido = "\n".join([page.extract_text() or "" for page in reader.pages])
+except Exception as e:
+    display(Markdown(f"❌ **Erro ao ler o arquivo PDF. Verifique se ele está corrompido ou é um PDF válido.**"))
+    sys.exit()
+
 
 print("🚀 Iniciando análise com os agentes da VerificAI...\n")
 
